@@ -9,7 +9,7 @@ Based on code provided by Form+Code: http://formandcode.com/code-examples/visual
 ### Keyboard commands:
 * __Space__ = trigger a new iteration
 * __s__ = save an SVG containing all geometry on screen
-* __i__ = save an image (TIFF) of the current screen
+* __i__ = save an image (PNG) of the current screen
 
 ---
 
