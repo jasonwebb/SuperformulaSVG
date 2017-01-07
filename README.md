@@ -15,8 +15,8 @@ Keyboard commands:
 
 Examples
 
-![Single drawing](images/superformula-104015.tif)
+![Single drawing](images/superformula-104015.png)
 
-![Three columns, two rows](images/superformula-104140.tif)
+![Three columns, two rows](images/superformula-104140.png)
 
-![Lots of rows and columns](images/superformula-104152.tif)
+![Lots of rows and columns](images/superformula-104152.png)
