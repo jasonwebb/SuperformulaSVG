@@ -15,7 +15,7 @@ Based on code provided by Form+Code: http://formandcode.com/code-examples/visual
 
 ### Examples
 
-![Single drawing](images/superformula-105445.png)
+![Single drawing](images/superformula-10589.png)
 
 ![Three columns, two rows](images/superformula-105510.png)
 

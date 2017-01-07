@@ -16,8 +16,8 @@
 import geomerative.*;
 
 // Number of rows and columns
-int ROWS = 10;
-int COLS = 10;
+int ROWS = 1;
+int COLS = 1;
 
 // Screen dimensions
 int SCREEN_WIDTH = 1024;
@@ -87,9 +87,9 @@ void draw() {
       for(int j = 0; j < ROWS; j++) {       
         // Set appropriate scale
         if(CELL_WIDTH < CELL_HEIGHT)
-          scaler = CELL_WIDTH * .3;
+          scaler = CELL_WIDTH * .5;
         else
-          scaler = CELL_HEIGHT * .3;
+          scaler = CELL_HEIGHT * .5;
         
         // Generate new seed values
         float m = random(10);
