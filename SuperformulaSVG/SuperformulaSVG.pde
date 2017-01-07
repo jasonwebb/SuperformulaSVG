@@ -16,8 +16,8 @@
 import geomerative.*;
 
 // Number of rows and columns
-int ROWS = 15;
-int COLS = 15;
+int ROWS = 10;
+int COLS = 10;
 
 // Screen dimensions
 int SCREEN_WIDTH = 1024;
