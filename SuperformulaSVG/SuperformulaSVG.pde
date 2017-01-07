@@ -154,7 +154,7 @@ void keyPressed() {
       saveOutput.saveGroup("svg/superformula-" + hour() + minute() + second() + ".svg", output);
       break;
     case 'i':
-      save("images/superformula-" + hour() + minute() + second() + ".tif");
+      save("images/superformula-" + hour() + minute() + second() + ".png");
       break;
   }
 }
