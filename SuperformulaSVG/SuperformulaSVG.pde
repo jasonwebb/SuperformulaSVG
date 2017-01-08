@@ -8,7 +8,9 @@
  *   Space = trigger a new iteration
  *   s = save an SVG containing all drawings on screen
  *   i = save an raster image of the screen
+ *   r = randomize parameters
  *   n = invert colors
+ *   h = hide/show UI
  *  
  * For more information about Form+Code visit http://formandcode.com
  * and http://formandcode.com/code-examples/visualize-superformula
@@ -55,7 +57,7 @@ int elementHeight = 20;
 int elementSpacing = 1;
 int sectionSpacing = 10;
 
-// Parameters --------------------
+// Parameters --------------------------
 float a,b,m,n1,n2,n3;
 int iterations;
 float decay;
@@ -219,6 +221,11 @@ void draw() {
   output.draw();
 }
 
+
+/**
+* Core superformula implementation adapted to use Geomerative constructs
+* See http://formandcode.com/code-examples/visualize-superformula
+*/
 RPoint[] superformula(float m,float n1,float n2,float n3) {
   float phi = TWO_PI / pointsPerRevolution;
   RPoint[] points = new RPoint[pointsPerRevolution+1];
@@ -232,20 +239,20 @@ RPoint[] superformula(float m,float n1,float n2,float n3) {
 
 RPoint superformulaPoint(float m, float n1, float n2, float n3, float phi) {
   float r;
-  float t1,t2;
-  float a=1,b=1;
+  float t1, t2;
+  float a=1, b=1;
   float x = 0;
   float y = 0;
 
   t1 = cos(m * phi / 4) / a;
   t1 = abs(t1);
-  t1 = pow(t1,n2);
+  t1 = pow(t1, n2);
 
   t2 = sin(m * phi / 4) / b;
   t2 = abs(t2);
-  t2 = pow(t2,n3);
+  t2 = pow(t2, n3);
 
-  r = pow(t1+t2,1/n1);
+  r = pow(t1 + t2, 1 / n1);
   
   if (abs(r) == 0) {
     x = 0;
@@ -497,39 +504,7 @@ void controlEvent(ControlEvent e) {
       break;
       
     case "randomize":
-      aRangeLower = random(aRangeMin, aRangeMax);
-      aRangeUpper = random(aRangeLower, aRangeMax);
-      aRange.setRangeValues(aRangeLower, aRangeUpper);
-      
-      bRangeLower = random(bRangeMin, bRangeMax);
-      bRangeUpper = random(bRangeLower, bRangeMax);
-      bRange.setRangeValues(bRangeLower, bRangeUpper);
-      
-      mRangeLower = random(mRangeMin, mRangeMax);
-      mRangeUpper = random(mRangeLower, mRangeMax);
-      mRange.setRangeValues(mRangeLower, mRangeUpper);
-      
-      n1RangeLower = random(n1RangeMin, n1RangeMax);
-      n1RangeUpper = random(n1RangeLower, n1RangeMax);
-      n1Range.setRangeValues(n1RangeLower, n1RangeUpper);
-      
-      n2RangeLower = random(n2RangeMin, n2RangeMax);
-      n2RangeUpper = random(n2RangeLower, n2RangeMax);
-      n2Range.setRangeValues(n2RangeLower, n2RangeUpper);
-      
-      n3RangeLower = random(n3RangeMin, n3RangeMax);
-      n3RangeUpper = random(n3RangeLower, n3RangeMax);
-      n3Range.setRangeValues(n3RangeLower, n3RangeUpper);
-      
-      iterationsRangeLower = (int)random(iterationsRangeMin, iterationsRangeMax);
-      iterationsRangeUpper = (int)random(iterationsRangeLower, iterationsRangeMax);
-      iterationsRange.setRangeValues(iterationsRangeLower, iterationsRangeUpper);
-      
-      decayRangeLower = random(decayRangeMin, decayRangeMax);
-      decayRangeUpper = random(decayRangeLower, decayRangeMax);
-      decayRange.setRangeValues(decayRangeLower, decayRangeUpper);
-      
-      if(autoIterate)  iterate = true;
+      randomize();
       break;      
     case "toggleInvertColors":
       invertColors();
@@ -540,6 +515,13 @@ void controlEvent(ControlEvent e) {
 
 /**
 * Handle key presses
+*
+*  Space = trigger one iteration
+*  s = save SVG
+*  i = save raster image
+*  r = randomize parameters
+*  n = invert colors
+*  h = hide/show UI
 */
 void keyPressed() {
   switch(key) {
@@ -548,6 +530,9 @@ void keyPressed() {
       break;
     case 's':
       saveSVG();
+      break;
+    case 'r':
+      randomize();
       break;
     case 'i':
       saveImage();
@@ -564,25 +549,76 @@ void keyPressed() {
   }
 }
 
+
+/**
+* Randomize all parameters
+*/
+void randomize() {
+  aRangeLower = random(aRangeMin, aRangeMax);
+  aRangeUpper = random(aRangeLower, aRangeMax);
+  aRange.setRangeValues(aRangeLower, aRangeUpper);
+  
+  bRangeLower = random(bRangeMin, bRangeMax);
+  bRangeUpper = random(bRangeLower, bRangeMax);
+  bRange.setRangeValues(bRangeLower, bRangeUpper);
+  
+  mRangeLower = random(mRangeMin, mRangeMax);
+  mRangeUpper = random(mRangeLower, mRangeMax);
+  mRange.setRangeValues(mRangeLower, mRangeUpper);
+  
+  n1RangeLower = random(n1RangeMin, n1RangeMax);
+  n1RangeUpper = random(n1RangeLower, n1RangeMax);
+  n1Range.setRangeValues(n1RangeLower, n1RangeUpper);
+  
+  n2RangeLower = random(n2RangeMin, n2RangeMax);
+  n2RangeUpper = random(n2RangeLower, n2RangeMax);
+  n2Range.setRangeValues(n2RangeLower, n2RangeUpper);
+  
+  n3RangeLower = random(n3RangeMin, n3RangeMax);
+  n3RangeUpper = random(n3RangeLower, n3RangeMax);
+  n3Range.setRangeValues(n3RangeLower, n3RangeUpper);
+  
+  iterationsRangeLower = (int)random(iterationsRangeMin, iterationsRangeMax);
+  iterationsRangeUpper = (int)random(iterationsRangeLower, iterationsRangeMax);
+  iterationsRange.setRangeValues(iterationsRangeLower, iterationsRangeUpper);
+  
+  decayRangeLower = random(decayRangeMin, decayRangeMax);
+  decayRangeUpper = random(decayRangeLower, decayRangeMax);
+  decayRange.setRangeValues(decayRangeLower, decayRangeUpper);
+  
+  if(autoIterate)  iterate = true;
+}
+
+/**
+* Invert the color palette
+*/
 void invertColors() {
   invert = !invert;
   
   if(invert) {
     panel.setColorLabel(uiColorLabelInverted);
-    helpText.setColorValue(uiColorLabel);
+    helpText.setColorValue(uiColorLabelInverted);
     buttonsPanel.setColorLabel(uiColorButton);
   } else {
     panel.setColorLabel(uiColorLabel);
-    helpText.setColorLabel(uiColorLabel);
+    helpText.setColorValue(uiColorLabel);
     buttonsPanel.setColorLabel(uiColorButton);
   }
 }
 
+
+/**
+* Save an SVG containing the current geometry
+*/
 void saveSVG() {
   saveOutput = new RSVG();
   saveOutput.saveGroup("svg/superformula-" + hour() + minute() + second() + ".svg", output);
 }
 
+
+/**
+* Save a raster image (PNG) of current screen
+*/
 void saveImage() {
   save("images/superformula-" + hour() + minute() + second() + ".png");
 }
