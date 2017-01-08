@@ -8,35 +8,112 @@
  *   Space = trigger a new iteration
  *   s = save an SVG containing all drawings on screen
  *   i = save an raster image of the screen
+ *   n = invert colors
  *  
  * For more information about Form+Code visit http://formandcode.com
  * and http://formandcode.com/code-examples/visualize-superformula
  */
  
 import geomerative.*;
+import controlP5.*;
 
-// Number of rows and columns
-int ROWS = 1;
-int COLS = 1;
+// UI elements ----------------------------------------
+ControlP5 ui;
+Group panel;
+Group buttonsPanel;
+Range aRange;
+Range bRange;
+Range mRange;
+Range n1Range;
+Range n2Range;
+Range n3Range;
+Range iterationsRange;
+Range decayRange;
+Slider rowsSlider;
+Slider colsSlider;
+Slider scaleSlider;
+Button iterateButton;
+Button randomizeButton;
+Button invertColorsButton;
+Button saveSVGButton;
+Button saveImageButton;
+Textlabel helpText;
+
+// Normal color palette
+color uiColorForeground = color(255*.5, 255*.5, 255*.5);
+color uiColorBackground = color(50,50,50);
+color uiColorLabel = color(50,50,50);
+color uiColorButton = color(200,200,200);
+
+// Inverted color palette
+color uiColorLabelInverted = color(255*.8,255*.8,255*.8);
+
+// Sizing
+int handleSize = 7;
+int panelWidth = 300;
+int elementHeight = 20;
+int elementSpacing = 1;
+int sectionSpacing = 10;
+
+// Parameters --------------------
+float a,b,m,n1,n2,n3;
+int iterations;
+float decay;
+int rows = 1;
+int cols = 1;
+int scaler = 330;
+
+float aRangeMin = 0.0,
+      aRangeMax = 4.0,
+      aRangeLower, aRangeUpper;
+      
+float bRangeMin = 0.0,
+      bRangeMax = 4.0,
+      bRangeLower, bRangeUpper;
+      
+float mRangeMin = 0.0,
+      mRangeMax = 40.0,
+      mRangeLower, mRangeUpper;
+      
+float n1RangeMin = 0.0,
+      n1RangeMax = 20.0,
+      n1RangeLower, n1RangeUpper;
+      
+float n2RangeMin = 0.0,
+      n2RangeMax = 20.0,
+      n2RangeLower, n2RangeUpper;
+      
+float n3RangeMin = 0.0,
+      n3RangeMax = 10.0,
+      n3RangeLower, n3RangeUpper;
+      
+int iterationsRangeMin = 1,
+    iterationsRangeMax = 30,
+    iterationsRangeLower, iterationsRangeUpper;
+    
+float decayRangeMin = 0.75,
+      decayRangeMax = 1.0,
+      decayRangeLower, decayRangeUpper;
+      
+int rowsSliderMax = 5;
+int colsSliderMax = 5;
+int scaleSliderMax = 400;
 
 // Screen dimensions
-int SCREEN_WIDTH = 1024;
-int SCREEN_HEIGHT = (SCREEN_WIDTH / COLS) * ROWS;
+int SCREEN_WIDTH = 1280;
+int SCREEN_HEIGHT = 720;
+
+// Cell dimensions
+int CELL_WIDTH = SCREEN_WIDTH / cols;
+int CELL_HEIGHT = SCREEN_HEIGHT / rows;
 
 // Resolution of drawing - more points make smoother lines
 int pointsPerRevolution = 720;
 
-// Operation flags
+// Operational flags
 boolean iterate = true;
 boolean invert = false;  // invert colors
-
-// Cell dimensions
-int CELL_WIDTH = SCREEN_WIDTH / COLS;
-int CELL_HEIGHT = SCREEN_HEIGHT / ROWS;
-
-// Superformula variables
-int minIterations = 1,
-    maxIterations = 10;
+boolean autoIterate = false;
 
 // SVG output variables
 RGroup output;
@@ -46,16 +123,13 @@ void setup() {
   surface.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
   
   RG.init(this);
+  
+  setupUI();
 }
 
 void draw() {
-  if(iterate) {
-    float scaler;
-    
-    if(invert)  background(25);
-    else        background(255);
-    
-    // Set up a new container shape
+  if(iterate) {       
+    // Set up a new container shape for output
     output = new RGroup();
     output.setFill(false);
       
@@ -68,60 +142,58 @@ void draw() {
     gridLines.setStrokeAlpha(30);
 
     // Add row lines    
-    for(int i=1; i<ROWS; i++) {
-      gridLines.addMoveTo(0, i * (height / ROWS));
-      gridLines.addLineTo(width, i * (height / ROWS));
+    for(int i=0; i<rows; i++) {
+      gridLines.addMoveTo(0, i * (height / rows));
+      gridLines.addLineTo(width, i * (height / rows));
     }
     
     // Add column lines
-    for(int i=1; i<COLS; i++) {
-      gridLines.addMoveTo(i * (width / COLS), 0);
-      gridLines.addLineTo(i * (width / COLS), height);
+    for(int i=1; i<cols; i++) {
+      gridLines.addMoveTo(i * (width / cols), 0);
+      gridLines.addLineTo(i * (width / cols), height);
     }
     
     // Add grid lines to container shape
     output.addElement(gridLines);
 
     // Create each of the superformula renders ==============================================
-    for(int i = 0; i < COLS; i++) {
-      for(int j = 0; j < ROWS; j++) {       
-        // Set appropriate scale
-        if(CELL_WIDTH < CELL_HEIGHT)
-          scaler = CELL_WIDTH * .5;
-        else
-          scaler = CELL_HEIGHT * .5;
-        
+    for(int i = 0; i < cols; i++) {
+      for(int j = 0; j < rows; j++) {        
         // Generate new seed values
-        float m = random(10);
-        float n1 = random(1,2);
-        float n2 = random(1,2);
-        float n3 = random(1,2);
-        int iterations = (int)random(minIterations, maxIterations);
+        a = random(aRangeLower, aRangeUpper);
+        b = random(bRangeLower, bRangeUpper);
+        m = random(mRangeLower, mRangeUpper);
+        n1 = random(n1RangeLower, n1RangeUpper);
+        n2 = random(n2RangeLower, n2RangeUpper);
+        n3 = random(n3RangeLower, n3RangeUpper);
+        iterations = (int)random(iterationsRangeLower, iterationsRangeUpper);
+        decay = random(decayRangeLower, decayRangeUpper);
+        
+        println("a: " + a + ", b: " + b + ", m: " + m + ", n1: " + n1 + ", n2: " + n2 + ", n3: " + n3 + ", iterations: " + iterations + ", decay: " + decay + ", scaler: " + scaler);
         
         // Position variables
-        float centerX = i * (width / COLS) + (width / COLS / 2);
-        float centerY = j * (height / ROWS) + (height / ROWS / 2);
+        float centerX = i * (width / cols) + (width / cols / 2);
+        float centerY = j * (height / rows) + (height / rows / 2);
   
         pushMatrix();
         translate(centerX, centerY);
         
         float newscaler = scaler;
-        float scaleDecay = random(.85,.99);
                
-        for(int s = 0; s <= iterations; s++) {   
+        for(int s = 0; s < iterations; s++) {   
             float mm = m;
             float nn1 = n1 + s;
             float nn2 = n2 + s;
             float nn3 = n3 + s;
-            newscaler *= scaleDecay;
+            newscaler *= decay;
             float sscaler = newscaler;
                 
             // Create new container for this iteration
             RShape formula = new RShape();
             formula.setStrokeAlpha(200);
             
-            if(invert)  formula.setStroke(#ffffff);
-            else        formula.setStroke(#000000);
+            if(invert)  formula.setStroke(color(255*.8,255*.8,255*.8));
+            else        formula.setStroke(color(50,50,50));
             
             RPoint[] points = superformula(mm, nn1, nn2, nn3);
             formula.addMoveTo(points[points.length-1].x * sscaler + centerX, points[points.length-1].y * sscaler + centerY);
@@ -136,41 +208,29 @@ void draw() {
         popMatrix();
       }
     }
-    
-    // Draw everything
-    output.draw();
        
     iterate = false;
+    println();
   }
-}
-
-void keyPressed() {
-  switch(key) {
-    case ' ':
-      iterate = true;
-      break;
-    case 's':
-      saveOutput = new RSVG();
-      saveOutput.saveGroup("svg/superformula-" + hour() + minute() + second() + ".svg", output);
-      break;
-    case 'i':
-      save("images/superformula-" + hour() + minute() + second() + ".png");
-      break;
-  }
+  
+  if(invert)  background(25);
+  else        background(255);
+  
+  output.draw();
 }
 
 RPoint[] superformula(float m,float n1,float n2,float n3) {
   float phi = TWO_PI / pointsPerRevolution;
   RPoint[] points = new RPoint[pointsPerRevolution+1];
   
-  for (int i = 0; i <= pointsPerRevolution;i++) {
-    points[i] = superformulaPoint(m,n1,n2,n3,phi * i);
+  for (int i = 0; i <= pointsPerRevolution; i++) {
+    points[i] = superformulaPoint(m, n1, n2, n3, phi * i);
   }
   
   return points;
 }
 
-RPoint superformulaPoint(float m,float n1,float n2,float n3,float phi) {
+RPoint superformulaPoint(float m, float n1, float n2, float n3, float phi) {
   float r;
   float t1,t2;
   float a=1,b=1;
@@ -186,6 +246,7 @@ RPoint superformulaPoint(float m,float n1,float n2,float n3,float phi) {
   t2 = pow(t2,n3);
 
   r = pow(t1+t2,1/n1);
+  
   if (abs(r) == 0) {
     x = 0;
     y = 0;
@@ -196,4 +257,332 @@ RPoint superformulaPoint(float m,float n1,float n2,float n3,float phi) {
   }
 
   return new RPoint(x, y);
+}
+
+
+/**
+* Set up the ControlP5 UI elements
+*
+* Initializes and configures all UI elements and relevant behavior, styling and positioning.
+*
+*/
+void setupUI() {
+  ui = new ControlP5(this);
+  
+  panel = ui.addGroup("panel")
+            .setPosition(10,10)
+            .hideBar();
+  
+  // Range sliders ===========================================================
+  aRangeLower = random(aRangeMin, aRangeMax * random(1));
+  aRangeUpper = random(aRangeLower, aRangeMax);  
+  aRange = ui.addRange("a")  
+             .setBroadcast(false)
+             .setPosition(0,0)
+             .setSize((int)(panelWidth * .75), elementHeight)
+             .setHandleSize(handleSize)             
+             .setRange(aRangeMin, aRangeMax)
+             .setRangeValues(aRangeLower, aRangeUpper)
+             .setBroadcast(true)             
+             .setGroup(panel);
+
+  bRangeLower = random(bRangeMin, bRangeMax * random(1));
+  bRangeUpper = random(bRangeLower, bRangeMax);
+  bRange = ui.addRange("b")
+             .setBroadcast(false)
+             .setPosition(0, elementHeight + elementSpacing)
+             .setSize((int)(panelWidth * .75), elementHeight)
+             .setHandleSize(handleSize)
+             .setRange(bRangeMin, bRangeMax)
+             .setRangeValues(bRangeLower, bRangeUpper)
+             .setBroadcast(true)
+             .setGroup(panel);
+
+  mRangeLower = random(mRangeMin, mRangeMax * random(1));
+  mRangeUpper = random(mRangeLower, mRangeMax);
+  mRange = ui.addRange("m")
+             .setBroadcast(false)
+             .setPosition(0, elementHeight*2 + elementSpacing*2)
+             .setSize((int)(panelWidth * .75), elementHeight)
+             .setHandleSize(handleSize)
+             .setRange(mRangeMin, mRangeMax)
+             .setRangeValues(mRangeLower, mRangeUpper)
+             .setBroadcast(true)
+             .setGroup(panel);
+
+  n1RangeLower = random(n1RangeMin, n1RangeMax * random(1));
+  n1RangeUpper = random(n1RangeLower, n1RangeMax);
+  n1Range = ui.addRange("n1")
+              .setBroadcast(false)
+              .setPosition(0, elementHeight*3 + elementSpacing*3)
+              .setSize((int)(panelWidth * .75), elementHeight)
+              .setHandleSize(handleSize)
+              .setRange(n1RangeMin, n1RangeMax)
+              .setRangeValues(n1RangeLower, n1RangeUpper)
+              .setBroadcast(true)
+              .setGroup(panel);
+
+  n2RangeLower = random(n2RangeMin, n2RangeMax * random(1));
+  n2RangeUpper = random(n2RangeLower, n2RangeMax);
+  n2Range = ui.addRange("n2")
+             .setBroadcast(false)
+             .setPosition(0, elementHeight*4 + elementSpacing*4)
+             .setSize((int)(panelWidth * .75), elementHeight)
+             .setHandleSize(handleSize)
+             .setRange(n2RangeMin, n2RangeMax)
+             .setRangeValues(n2RangeLower, n2RangeUpper)
+             .setBroadcast(true)
+             .setGroup(panel);
+
+  n3RangeLower = random(n3RangeMin, n3RangeMax * random(1));
+  n3RangeUpper = random(n3RangeLower, n3RangeMax);
+  n3Range = ui.addRange("n3")
+              .setBroadcast(false)
+              .setPosition(0, elementHeight*5 + elementSpacing*5)
+              .setSize((int)(panelWidth * .75), elementHeight)
+              .setHandleSize(handleSize)
+              .setRange(n3RangeMin, n3RangeMax)
+              .setRangeValues(n3RangeLower, n3RangeUpper)
+              .setBroadcast(true)
+              .setGroup(panel);
+
+  iterationsRangeLower = (int)(random(iterationsRangeMin, iterationsRangeMax * random(1)));
+  iterationsRangeUpper = (int)(random(iterationsRangeLower, iterationsRangeMax));
+  iterationsRange = ui.addRange("iterations")
+                      .setBroadcast(false)
+                      .setPosition(0, elementHeight*6 + elementSpacing*6)
+                      .setSize((int)(panelWidth * .75), elementHeight)
+                      .setHandleSize(handleSize)
+                      .setRange(iterationsRangeMin, iterationsRangeMax)
+                      .setRangeValues(iterationsRangeLower, iterationsRangeUpper)
+                      .setBroadcast(true)
+                      .setGroup(panel);
+             
+  decayRangeLower = random(decayRangeMin, decayRangeMax * random(1));
+  decayRangeUpper = random(decayRangeLower, decayRangeMax);
+  decayRange = ui.addRange("decay")
+                 .setBroadcast(false)
+                 .setPosition(0, elementHeight*7 + elementSpacing*7)
+                 .setSize((int)(panelWidth * .75), elementHeight)
+                 .setHandleSize(handleSize)
+                 .setRange(decayRangeMin, decayRangeMax)
+                 .setRangeValues(decayRangeLower, decayRangeUpper)
+                 .setBroadcast(true)
+                 .setGroup(panel);
+
+  // Row/column sliders ===========================================================================
+  rowsSlider = ui.addSlider("rows")
+                 .setPosition(0, elementHeight*8 + elementSpacing*8 + sectionSpacing)
+                 .setSize((int)(panelWidth * .75), elementHeight)
+                 .setRange(1, rowsSliderMax)
+                 .setNumberOfTickMarks(rowsSliderMax)
+                 .showTickMarks(true)
+                 .snapToTickMarks(true)
+                 .setGroup(panel);
+                 
+  colsSlider = ui.addSlider("cols")
+                 .setPosition(0, elementHeight*9 + elementSpacing*9 + sectionSpacing)
+                 .setSize((int)(panelWidth * .75), elementHeight)
+                 .setRange(1, colsSliderMax)
+                 .setNumberOfTickMarks(colsSliderMax)
+                 .showTickMarks(true)
+                 .snapToTickMarks(true)
+                 .setGroup(panel);
+
+  scaleSlider = ui.addSlider("scaler")
+                  .setPosition(0, elementHeight*10 + elementSpacing*10 + sectionSpacing)
+                  .setSize((int)(panelWidth * .75), elementHeight)
+                  .setRange(1, scaleSliderMax)                  
+                  .setScrollSensitivity(.4)
+                  .setValue(330)
+                  .setGroup(panel);
+
+  // Buttons ============================================================================================
+  buttonsPanel = ui.addGroup("buttons")
+                   .hideBar()
+                   .setGroup(panel);
+            
+  iterateButton = ui.addButton("iterate")
+                    .setPosition(0, elementHeight*11 + elementSpacing*11 + sectionSpacing*2)
+                    .setSize((int)(panelWidth * .75), elementHeight)
+                    .setGroup(buttonsPanel);
+                    
+  randomizeButton = ui.addButton("randomize")
+                      .setPosition(0, elementHeight*12 + elementSpacing*12 + sectionSpacing*2)
+                      .setSize((int)(panelWidth * .75), elementHeight)
+                      .setGroup(buttonsPanel);
+  
+  invertColorsButton = ui.addButton("toggleInvertColors")
+                         .setLabel("Invert colors")
+                         .setPosition(0, elementHeight*13 + elementSpacing*13 + sectionSpacing*2)
+                         .setSize((int)(panelWidth * .75), elementHeight)
+                         .setGroup(buttonsPanel);
+
+  saveSVGButton = ui.addButton("saveSVG")
+                    .setLabel("Save SVG")
+                    .setPosition(0, elementHeight*14 + elementSpacing*14 + sectionSpacing*3)
+                    .setSize((int)(panelWidth * .75), elementHeight)
+                    .setGroup(buttonsPanel);
+                    
+  saveImageButton = ui.addButton("saveImage")
+                      .setLabel("Save Image")
+                      .setPosition(0, elementHeight*15 + elementSpacing*15 + sectionSpacing*3)
+                      .setSize((int)(panelWidth * .75), elementHeight)
+                      .setGroup(buttonsPanel);
+                      
+  // Help text label ==========================================================================
+  helpText = ui.addTextlabel("help")
+               .setText("Press 'h' to show/hide UI")
+               .setPosition(0, elementHeight*16 + elementSpacing*16 + sectionSpacing*3 + 5)
+               .setSize(panelWidth, elementHeight)
+               .setColorValue(uiColorLabel)
+               .setGroup(panel);
+
+  // Apply color palette ===============================
+  panel.setColorForeground(uiColorForeground)
+       .setColorBackground(uiColorBackground)
+       .setColorLabel(uiColorLabel);
+       
+  buttonsPanel.setColorLabel(uiColorButton);
+}
+
+
+/**
+* Handle all control events fired by ControlP5 UI elements
+*
+* (1) Range sliders do not automatically map to live variables, so must grab current values and store them manually
+* (2) Buttons trigger custom behavior (randomizing, saving to SVG, etc), so we need to connect that functionality here
+*/
+void controlEvent(ControlEvent e) {
+  switch(e.getName()) {
+    case "a":
+      aRangeLower = e.getController().getArrayValue(0);
+      aRangeUpper = e.getController().getArrayValue(1);     
+      if(autoIterate)  iterate = true;
+      break;
+    case "b":
+      bRangeLower = e.getController().getArrayValue(0);
+      bRangeUpper = e.getController().getArrayValue(1);
+      if(autoIterate)  iterate = true;
+      break;
+    case "m":
+      mRangeLower = e.getController().getArrayValue(0);
+      mRangeUpper = e.getController().getArrayValue(1);      
+      if(autoIterate)  iterate = true;
+      break;
+    case "n1":
+      n1RangeLower = e.getController().getArrayValue(0);
+      n1RangeUpper = e.getController().getArrayValue(1);
+      if(autoIterate)  iterate = true;
+      break;
+    case "n2":
+      n2RangeLower = e.getController().getArrayValue(0);
+      n2RangeUpper = e.getController().getArrayValue(1);
+      if(autoIterate)  iterate = true;
+      break;
+    case "n3":
+      n3RangeLower = e.getController().getArrayValue(0);
+      n3RangeUpper = e.getController().getArrayValue(1);
+      if(autoIterate)  iterate = true;
+      break;
+    case "iterations":
+      iterationsRangeLower = (int)e.getController().getArrayValue(0);
+      iterationsRangeUpper = (int)e.getController().getArrayValue(1);
+      if(autoIterate)  iterate = true;
+      break;
+    case "decay":
+      decayRangeLower = e.getController().getArrayValue(0);
+      decayRangeUpper = e.getController().getArrayValue(1);
+      if(autoIterate)  iterate = true;
+      break;
+      
+    case "randomize":
+      aRangeLower = random(aRangeMin, aRangeMax);
+      aRangeUpper = random(aRangeLower, aRangeMax);
+      aRange.setRangeValues(aRangeLower, aRangeUpper);
+      
+      bRangeLower = random(bRangeMin, bRangeMax);
+      bRangeUpper = random(bRangeLower, bRangeMax);
+      bRange.setRangeValues(bRangeLower, bRangeUpper);
+      
+      mRangeLower = random(mRangeMin, mRangeMax);
+      mRangeUpper = random(mRangeLower, mRangeMax);
+      mRange.setRangeValues(mRangeLower, mRangeUpper);
+      
+      n1RangeLower = random(n1RangeMin, n1RangeMax);
+      n1RangeUpper = random(n1RangeLower, n1RangeMax);
+      n1Range.setRangeValues(n1RangeLower, n1RangeUpper);
+      
+      n2RangeLower = random(n2RangeMin, n2RangeMax);
+      n2RangeUpper = random(n2RangeLower, n2RangeMax);
+      n2Range.setRangeValues(n2RangeLower, n2RangeUpper);
+      
+      n3RangeLower = random(n3RangeMin, n3RangeMax);
+      n3RangeUpper = random(n3RangeLower, n3RangeMax);
+      n3Range.setRangeValues(n3RangeLower, n3RangeUpper);
+      
+      iterationsRangeLower = (int)random(iterationsRangeMin, iterationsRangeMax);
+      iterationsRangeUpper = (int)random(iterationsRangeLower, iterationsRangeMax);
+      iterationsRange.setRangeValues(iterationsRangeLower, iterationsRangeUpper);
+      
+      decayRangeLower = random(decayRangeMin, decayRangeMax);
+      decayRangeUpper = random(decayRangeLower, decayRangeMax);
+      decayRange.setRangeValues(decayRangeLower, decayRangeUpper);
+      
+      if(autoIterate)  iterate = true;
+      break;      
+    case "toggleInvertColors":
+      invertColors();
+      break;
+  }  
+}
+
+
+/**
+* Handle key presses
+*/
+void keyPressed() {
+  switch(key) {
+    case ' ':
+      iterate = true;
+      break;
+    case 's':
+      saveSVG();
+      break;
+    case 'i':
+      saveImage();
+      break;
+    case 'n':
+      invertColors();
+      break;
+    case 'h':
+      if(panel.isVisible())
+        panel.hide();
+      else
+        panel.show();
+      break;
+  }
+}
+
+void invertColors() {
+  invert = !invert;
+  
+  if(invert) {
+    panel.setColorLabel(uiColorLabelInverted);
+    helpText.setColorValue(uiColorLabel);
+    buttonsPanel.setColorLabel(uiColorButton);
+  } else {
+    panel.setColorLabel(uiColorLabel);
+    helpText.setColorLabel(uiColorLabel);
+    buttonsPanel.setColorLabel(uiColorButton);
+  }
+}
+
+void saveSVG() {
+  saveOutput = new RSVG();
+  saveOutput.saveGroup("svg/superformula-" + hour() + minute() + second() + ".svg", output);
+}
+
+void saveImage() {
+  save("images/superformula-" + hour() + minute() + second() + ".png");
 }
