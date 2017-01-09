@@ -39,6 +39,8 @@ Button randomizeButton;
 Button invertColorsButton;
 Button saveSVGButton;
 Button saveImageButton;
+Button saveParametersButton;
+Button loadParametersButton;
 Textlabel helpText;
 
 // Normal color palette
@@ -63,13 +65,13 @@ int iterations;
 float decay;
 int rows = 1;
 int cols = 1;
-int scaler = 330;
+float highestRadius;  // used for automatically scaling drawings to fit cells
 
-float aRangeMin = 0.0,
+float aRangeMin = 0.01,
       aRangeMax = 4.0,
       aRangeLower, aRangeUpper;
       
-float bRangeMin = 0.0,
+float bRangeMin = 0.01,
       bRangeMax = 4.0,
       bRangeLower, bRangeUpper;
       
@@ -77,16 +79,16 @@ float mRangeMin = 0.0,
       mRangeMax = 40.0,
       mRangeLower, mRangeUpper;
       
-float n1RangeMin = 0.0,
+float n1RangeMin = 0.01,
       n1RangeMax = 20.0,
       n1RangeLower, n1RangeUpper;
       
-float n2RangeMin = 0.0,
+float n2RangeMin = 0.01,
       n2RangeMax = 20.0,
       n2RangeLower, n2RangeUpper;
       
-float n3RangeMin = 0.0,
-      n3RangeMax = 10.0,
+float n3RangeMin = 0.01,
+      n3RangeMax = 5.0,
       n3RangeLower, n3RangeUpper;
       
 int iterationsRangeMin = 1,
@@ -99,7 +101,6 @@ float decayRangeMin = 0.75,
       
 int rowsSliderMax = 5;
 int colsSliderMax = 5;
-int scaleSliderMax = 400;
 
 // Screen dimensions
 int SCREEN_WIDTH = 1280;
@@ -161,7 +162,7 @@ void draw() {
     // Create each of the superformula renders ==============================================
     for(int i = 0; i < cols; i++) {
       for(int j = 0; j < rows; j++) {        
-        // Generate new seed values
+        // Generate new parameter values
         a = random(aRangeLower, aRangeUpper);
         b = random(bRangeLower, bRangeUpper);
         m = random(mRangeLower, mRangeUpper);
@@ -171,41 +172,59 @@ void draw() {
         iterations = (int)random(iterationsRangeLower, iterationsRangeUpper);
         decay = random(decayRangeLower, decayRangeUpper);
         
-        println("a: " + a + ", b: " + b + ", m: " + m + ", n1: " + n1 + ", n2: " + n2 + ", n3: " + n3 + ", iterations: " + iterations + ", decay: " + decay + ", scaler: " + scaler);
+        println("a: " + a + ", b: " + b + ", m: " + m + ", n1: " + n1 + ", n2: " + n2 + ", n3: " + n3 + ", iterations: " + iterations + ", decay: " + decay);
         
         // Position variables
         float centerX = i * (width / cols) + (width / cols / 2);
         float centerY = j * (height / rows) + (height / rows / 2);
   
+        // Scaling variables
+        highestRadius = 0;
+  
         pushMatrix();
         translate(centerX, centerY);
         
-        float newscaler = scaler;
+        float localScale = 1;
+        float overallScale = 1;
+        highestRadius = 0;
                
-        for(int s = 0; s < iterations; s++) {   
-            float mm = m;
-            float nn1 = n1 + s;
-            float nn2 = n2 + s;
-            float nn3 = n3 + s;
-            newscaler *= decay;
-            float sscaler = newscaler;
-                
-            // Create new container for this iteration
-            RShape formula = new RShape();
-            formula.setStrokeAlpha(200);
-            
-            if(invert)  formula.setStroke(color(255*.8,255*.8,255*.8));
-            else        formula.setStroke(color(50,50,50));
-            
-            RPoint[] points = superformula(mm, nn1, nn2, nn3);
-            formula.addMoveTo(points[points.length-1].x * sscaler + centerX, points[points.length-1].y * sscaler + centerY);
+        for(int s = iterations; s > 0; s--) {
+          float aa = a + s;
+          float bb = b + s;
+          float mm = m;
+          float nn1 = n1 + s;
+          float nn2 = n2 + s;
+          float nn3 = n3 + s;
+          localScale *= decay;
+              
+          // Create new container for this iteration
+          RShape formula = new RShape();
+          formula.setStrokeAlpha(200);
+          
+          if(invert)  formula.setStroke(color(255*.8,255*.8,255*.8));
+          else        formula.setStroke(color(50,50,50));
+          
+          RPoint[] points = superformula(aa, bb, mm, nn1, nn2, nn3);
 
-            for(int t=1; t<points.length; t++) {
-              formula.addLineTo(points[t].x * sscaler + centerX, points[t].y * sscaler + centerY);
-            }
-            
-            output.addElement(formula);
-        }
+          if(s == iterations) {
+            int smallestDimension;
+            if(CELL_WIDTH < CELL_HEIGHT)
+              smallestDimension = CELL_WIDTH;
+            else
+              smallestDimension = CELL_HEIGHT;
+  
+            overallScale = (smallestDimension*.9) / (highestRadius*2);
+            println(highestRadius*2 * overallScale);
+          }
+          
+          formula.addMoveTo(points[points.length-1].x * localScale * overallScale + centerX, points[points.length-1].y * localScale * overallScale + centerY);
+
+          for(int t = 0; t < points.length; t++) {
+            formula.addLineTo(points[t].x * localScale * overallScale + centerX, points[t].y * localScale * overallScale + centerY);
+          }
+          
+          output.addElement(formula);
+        }        
         
         popMatrix();
       }
@@ -226,21 +245,20 @@ void draw() {
 * Core superformula implementation adapted to use Geomerative constructs
 * See http://formandcode.com/code-examples/visualize-superformula
 */
-RPoint[] superformula(float m,float n1,float n2,float n3) {
+RPoint[] superformula(float a, float b, float m, float n1, float n2, float n3) {
   float phi = TWO_PI / pointsPerRevolution;
   RPoint[] points = new RPoint[pointsPerRevolution+1];
   
   for (int i = 0; i <= pointsPerRevolution; i++) {
-    points[i] = superformulaPoint(m, n1, n2, n3, phi * i);
+    points[i] = superformulaPoint(a, b, m, n1, n2, n3, phi * i);    
   }
   
   return points;
 }
 
-RPoint superformulaPoint(float m, float n1, float n2, float n3, float phi) {
+RPoint superformulaPoint(float a, float b, float m, float n1, float n2, float n3, float phi) {
   float r;
   float t1, t2;
-  float a=1, b=1;
   float x = 0;
   float y = 0;
 
@@ -262,6 +280,8 @@ RPoint superformulaPoint(float m, float n1, float n2, float n3, float phi) {
     x = r * cos(phi);
     y = r * sin(phi);
   }
+  
+  if(r > highestRadius)  highestRadius = r;
 
   return new RPoint(x, y);
 }
@@ -381,9 +401,8 @@ void setupUI() {
   rowsSlider = ui.addSlider("rows")
                  .setPosition(0, elementHeight*8 + elementSpacing*8 + sectionSpacing)
                  .setSize((int)(panelWidth * .75), elementHeight)
-                 .setRange(1, rowsSliderMax)
-                 .setNumberOfTickMarks(rowsSliderMax)
-                 .showTickMarks(true)
+                 .setRange(1, rowsSliderMax)                 
+                 .setNumberOfTickMarks(colsSliderMax)
                  .snapToTickMarks(true)
                  .setGroup(panel);
                  
@@ -391,18 +410,10 @@ void setupUI() {
                  .setPosition(0, elementHeight*9 + elementSpacing*9 + sectionSpacing)
                  .setSize((int)(panelWidth * .75), elementHeight)
                  .setRange(1, colsSliderMax)
+                 .setColorTickMark(color(255))
                  .setNumberOfTickMarks(colsSliderMax)
-                 .showTickMarks(true)
                  .snapToTickMarks(true)
                  .setGroup(panel);
-
-  scaleSlider = ui.addSlider("scaler")
-                  .setPosition(0, elementHeight*10 + elementSpacing*10 + sectionSpacing)
-                  .setSize((int)(panelWidth * .75), elementHeight)
-                  .setRange(1, scaleSliderMax)                  
-                  .setScrollSensitivity(.4)
-                  .setValue(330)
-                  .setGroup(panel);
 
   // Buttons ============================================================================================
   buttonsPanel = ui.addGroup("buttons")
@@ -410,37 +421,49 @@ void setupUI() {
                    .setGroup(panel);
             
   iterateButton = ui.addButton("iterate")
-                    .setPosition(0, elementHeight*11 + elementSpacing*11 + sectionSpacing*2)
+                    .setPosition(0, elementHeight*10 + elementSpacing*10 + sectionSpacing*2)
                     .setSize((int)(panelWidth * .75), elementHeight)
                     .setGroup(buttonsPanel);
                     
   randomizeButton = ui.addButton("randomize")
-                      .setPosition(0, elementHeight*12 + elementSpacing*12 + sectionSpacing*2)
+                      .setPosition(0, elementHeight*11 + elementSpacing*11 + sectionSpacing*2)
                       .setSize((int)(panelWidth * .75), elementHeight)
                       .setGroup(buttonsPanel);
   
   invertColorsButton = ui.addButton("toggleInvertColors")
                          .setLabel("Invert colors")
-                         .setPosition(0, elementHeight*13 + elementSpacing*13 + sectionSpacing*2)
+                         .setPosition(0, elementHeight*12 + elementSpacing*12 + sectionSpacing*2)
                          .setSize((int)(panelWidth * .75), elementHeight)
                          .setGroup(buttonsPanel);
 
   saveSVGButton = ui.addButton("saveSVG")
                     .setLabel("Save SVG")
-                    .setPosition(0, elementHeight*14 + elementSpacing*14 + sectionSpacing*3)
+                    .setPosition(0, elementHeight*13 + elementSpacing*13 + sectionSpacing*3)
                     .setSize((int)(panelWidth * .75), elementHeight)
                     .setGroup(buttonsPanel);
                     
   saveImageButton = ui.addButton("saveImage")
                       .setLabel("Save Image")
-                      .setPosition(0, elementHeight*15 + elementSpacing*15 + sectionSpacing*3)
+                      .setPosition(0, elementHeight*14 + elementSpacing*14 + sectionSpacing*3)
                       .setSize((int)(panelWidth * .75), elementHeight)
                       .setGroup(buttonsPanel);
+
+  saveParametersButton = ui.addButton("saveParameters")
+                           .setLabel("Save Parameters")
+                           .setPosition(0, elementHeight*15 + elementSpacing*15 + sectionSpacing*4)
+                           .setSize((int)(panelWidth * .75), elementHeight)
+                           .setGroup(buttonsPanel);
+                           
+  loadParametersButton = ui.addButton("loadParameters")
+                           .setLabel("Load Parameters")
+                           .setPosition(0, elementHeight*16 + elementSpacing*16 + sectionSpacing*4)
+                           .setSize((int)(panelWidth * .75), elementHeight)
+                           .setGroup(buttonsPanel);
                       
   // Help text label ==========================================================================
   helpText = ui.addTextlabel("help")
                .setText("Press 'h' to show/hide UI")
-               .setPosition(0, elementHeight*16 + elementSpacing*16 + sectionSpacing*3 + 5)
+               .setPosition(0, elementHeight*17 + elementSpacing*17 + sectionSpacing*4 + 5)
                .setSize(panelWidth, elementHeight)
                .setColorValue(uiColorLabel)
                .setGroup(panel);
@@ -503,6 +526,12 @@ void controlEvent(ControlEvent e) {
       if(autoIterate)  iterate = true;
       break;
       
+    case "rows":
+    case "cols":
+      CELL_WIDTH = SCREEN_WIDTH / cols;
+      CELL_HEIGHT = SCREEN_HEIGHT / rows;
+      break;
+      
     case "randomize":
       randomize();
       break;      
@@ -522,6 +551,8 @@ void controlEvent(ControlEvent e) {
 *  r = randomize parameters
 *  n = invert colors
 *  h = hide/show UI
+*  p = save parameters
+*  l = load parameters
 */
 void keyPressed() {
   switch(key) {
@@ -545,6 +576,12 @@ void keyPressed() {
         panel.hide();
       else
         panel.show();
+      break;
+    case 'p':
+      saveParameters();
+      break;
+    case 'l':
+      loadParameters();
       break;
   }
 }
@@ -597,10 +634,12 @@ void invertColors() {
   
   if(invert) {
     panel.setColorLabel(uiColorLabelInverted);
+    colsSlider.setColorTickMark(color(25));
     helpText.setColorValue(uiColorLabelInverted);
-    buttonsPanel.setColorLabel(uiColorButton);
+    buttonsPanel.setColorLabel(uiColorButton);    
   } else {
     panel.setColorLabel(uiColorLabel);
+    colsSlider.setColorTickMark(color(255));
     helpText.setColorValue(uiColorLabel);
     buttonsPanel.setColorLabel(uiColorButton);
   }
@@ -621,4 +660,40 @@ void saveSVG() {
 */
 void saveImage() {
   save("images/superformula-" + hour() + minute() + second() + ".png");
+}
+
+
+/**
+* Saves current ControlP5 UI values to a chosen JSON file
+*/
+void saveParameters() {
+  selectOutput("Save parameters file", "saveParametersTo");
+}
+
+void saveParametersTo(File file) {
+  if(file != null) {
+    String fullPath = file.getAbsolutePath();
+    ui.saveProperties(fullPath);    
+  }
+}
+
+
+/**
+* Load previously saved ControlP5 UI values from a selected JSON file
+*/
+void loadParameters() {
+  selectInput("Choose a parameters file", "loadParametersFrom");
+}
+
+void loadParametersFrom(File file) {
+  if(file != null) {
+    String fullPath = file.getAbsolutePath();
+    
+    if(fullPath.substring(fullPath.length() - 4, fullPath.length()).equals("json")) {
+      ui.loadProperties(fullPath);
+      iterate = true;
+    } else {
+      println("Not a valid file type.");
+    }
+  }
 }

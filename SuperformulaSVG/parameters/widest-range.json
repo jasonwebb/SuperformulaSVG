@@ -1,0 +1,48 @@
+{
+  "/iterations": {
+    "lowValue": 1,
+    "highValue": 30
+  },
+  "/a": {
+    "lowValue": 0.009999999776482582,
+    "highValue": 4
+  },
+  "/n1": {
+    "lowValue": 0.009999999776482582,
+    "highValue": 20
+  },
+  "/n2": {
+    "lowValue": 0.009999999776482582,
+    "highValue": 20
+  },
+  "/rows": {
+    "min": 1,
+    "max": 5,
+    "value": 1
+  },
+  "/b": {
+    "lowValue": 0.009999999776482582,
+    "highValue": 4
+  },
+  "/n3": {
+    "lowValue": 0.009999999776482582,
+    "highValue": 5
+  },
+  "/cols": {
+    "min": 1,
+    "max": 5,
+    "value": 1
+  },
+  "/help": {
+    "stringValue": "Press 'h' to show/hide UI",
+    "value": 0
+  },
+  "/m": {
+    "lowValue": 0,
+    "highValue": 40
+  },
+  "/decay": {
+    "lowValue": 0.75,
+    "highValue": 0.9988151788711548
+  }
+}

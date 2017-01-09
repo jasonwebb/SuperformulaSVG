@@ -42,8 +42,8 @@ Learn more about the superformula through:
 
 ### Screenshots
 
-![Single drawing](docs/superformula-10589.png)
+![Single drawing](docs/full-window.png)
 
-![Three columns, two rows](docs/superformula-105510.png)
+![Three columns, two rows](docs/two-by-three.png)
 
-![Lots of rows and columns](docs/superformula-105523.png)
+![Lots of rows and columns](docs/five-by-five.png)
