@@ -15,7 +15,7 @@ The superformula is a mathematical method for generating radial geometry with di
 Where __&phi;__ (phi) is an angle (between 0-359) and the resulting value __r__ being the radius of the geometry at that angle.
 
 I personally like to think of the various parameters as:
-* __a__ and __b__ do _something_, but are so small compared to the other values as to be mostly insignificant.
+* __a__ and __b__ do _something_, but not sure yet
 * __m__ is the number of peaks per revolution
 * __n1__ inversely correlates to the convexity of curvature between peak (smaller numbers make deeper valleys)
 * __n2__ relates to the presence and size of larger, smoother mounds between the peaks created by __m__ that are inversely proportional in size to the size of those peaks. Larger mounds results in smaller peaks and vice versa.
@@ -37,6 +37,8 @@ Learn more about the superformula through:
 * __r__ = randomize parameters
 * __n__ = invert colors
 * __h__ = hide/show UI
+* __p__ = save parameters to JSON file
+* __l__ = load parameters from JSON file
 
 ---
 

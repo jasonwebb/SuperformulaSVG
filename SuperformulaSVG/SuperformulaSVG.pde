@@ -11,6 +11,8 @@
  *   r = randomize parameters
  *   n = invert colors
  *   h = hide/show UI
+ *   p = save parameters to JSON file
+ *   l = load parameters from JSON file
  *  
  * For more information about Form+Code visit http://formandcode.com
  * and http://formandcode.com/code-examples/visualize-superformula
