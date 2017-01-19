@@ -4,9 +4,7 @@ Generative superformula line-art generator built in Processing, supporting vecto
 
 Based on code provided by Form+Code: http://formandcode.com/code-examples/visualize-superformula
 
----
-
-### About the superformula
+## About the superformula
 
 The superformula is a mathematical method for generating radial geometry with diverse, often organic-looking features. It is described by the following formula:
 
@@ -28,9 +26,7 @@ Learn more about the superformula through:
 * [Wikipedia entry on supershapes](https://en.wikipedia.org/wiki/Superformula) (also relevant is the [superellipse](https://en.wikipedia.org/wiki/Superellipse) page).
 * Paul Bourke's article ["Supershapes (Superformula)"](http://paulbourke.net/geometry/supershape/)
 
----
-
-### Keyboard commands:
+## Keyboard commands:
 * __Space__ = trigger a new iteration
 * __s__ = save an SVG containing all geometry on screen
 * __i__ = save an image (PNG) of the current screen
@@ -40,9 +36,7 @@ Learn more about the superformula through:
 * __p__ = save parameters to JSON file
 * __l__ = load parameters from JSON file
 
----
-
-### Screenshots
+## Screenshots
 
 ![Single drawing](docs/full-window.png)
 

@@ -62,7 +62,7 @@ int elementSpacing = 1;
 int sectionSpacing = 10;
 
 // Parameters --------------------------
-float a,b,m,n1,n2,n3;
+float a, b, m, n1, n2, n3;
 int iterations;
 float decay;
 int rows = 1;
@@ -191,13 +191,14 @@ void draw() {
         highestRadius = 0;
                
         for(int s = iterations; s > 0; s--) {
+          localScale *= decay;
+          
           float aa = a + s;
           float bb = b + s;
           float mm = m;
           float nn1 = n1 + s;
           float nn2 = n2 + s;
-          float nn3 = n3 + s;
-          localScale *= decay;
+          float nn3 = n3 + s;          
               
           // Create new container for this iteration
           RShape formula = new RShape();
@@ -216,7 +217,6 @@ void draw() {
               smallestDimension = CELL_HEIGHT;
   
             overallScale = (smallestDimension*.9) / (highestRadius*2);
-            println(highestRadius*2 * overallScale);
           }
           
           formula.addMoveTo(points[points.length-1].x * localScale * overallScale + centerX, points[points.length-1].y * localScale * overallScale + centerY);
