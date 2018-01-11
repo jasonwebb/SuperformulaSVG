@@ -111,6 +111,8 @@ int SCREEN_HEIGHT = 720;
 // Cell dimensions
 int CELL_WIDTH = SCREEN_WIDTH / cols;
 int CELL_HEIGHT = SCREEN_HEIGHT / rows;
+int padding = 20;
+int smallestDimension;
 
 // Resolution of drawing - more points make smoother lines
 int pointsPerRevolution = 720;
@@ -137,6 +139,13 @@ void draw() {
     // Set up a new container shape for output
     output = new RGroup();
     output.setFill(false);
+    
+    // Find smallest dimension for scaling
+    if(CELL_WIDTH < CELL_HEIGHT) {
+      smallestDimension = CELL_WIDTH/2;
+    } else {
+      smallestDimension = CELL_HEIGHT/2;
+    }
       
     // Create the grid lines =====================================================
     RShape gridLines = new RShape();
@@ -180,60 +189,45 @@ void draw() {
         float centerX = i * (width / cols) + (width / cols / 2);
         float centerY = j * (height / rows) + (height / rows / 2);
   
-        // Scaling variables
-        largestRadius = 0;
-  
         pushMatrix();
-        translate(centerX, centerY);
-        
-        float localScale = 1;
-        float overallScale = 1;
-        largestRadius = 0;
-               
-        for(int s = iterations; s > 0; s--) {
-          localScale *= decay;
-          
-          float aa = a + s;
-          float bb = b + s;
-          float mm = m;
-          float nn1 = n1 + s;
-          float nn2 = n2 + s;
-          float nn3 = n3 + s;          
-              
-          // Create new container for this iteration
-          RShape formula = new RShape();
-          formula.setStrokeAlpha(200);
-          
-          if(invert)  formula.setStroke(color(255*.8,255*.8,255*.8));
-          else        formula.setStroke(color(50,50,50));
-          
-          RPoint[] points = superformula(aa, bb, mm, nn1, nn2, nn3);
-
-          if(s == iterations) {
-            int smallestDimension;
-            if(CELL_WIDTH < CELL_HEIGHT)
-              smallestDimension = CELL_WIDTH;
-            else
-              smallestDimension = CELL_HEIGHT;
+          for(int s = iterations; s > 0; s--) {
+            float aa = a * decay * s/100;
+            float bb = b * decay * s/100;
+            float mm = m * decay;
+            float nn1 = n1 * decay;
+            float nn2 = n2 * decay;
+            float nn3 = n3 * decay;
+                
+            // Create new container for this iteration
+            RShape formula = new RShape();
+            formula.setStrokeAlpha(200);
+            
+            if(invert)  formula.setStroke(color(255*.8,255*.8,255*.8));
+            else        formula.setStroke(color(50,50,50));
+            
+            largestRadius = 0;
+            RPoint[] points = superformula(aa, bb, mm, nn1, nn2, nn3);
+            
+            formula.addMoveTo(
+              map(points[points.length-1].x, 0, largestRadius, 0, smallestDimension - padding) + centerX,
+              map(points[points.length-1].y, 0, largestRadius, 0, smallestDimension - padding) + centerY
+            );
   
-            overallScale = (smallestDimension*.9) / (largestRadius*2);
+            for(int t = 0; t < points.length; t++) {
+              formula.addLineTo(
+                map(points[t].x, 0, largestRadius, 0, smallestDimension - padding) + centerX,
+                map(points[t].y, 0, largestRadius, 0, smallestDimension - padding) + centerY
+              );
+            }
+            
+            output.addElement(formula);
           }
-          
-          formula.addMoveTo(points[points.length-1].x * localScale * overallScale + centerX, points[points.length-1].y * localScale * overallScale + centerY);
-
-          for(int t = 0; t < points.length; t++) {
-            formula.addLineTo(points[t].x * localScale * overallScale + centerX, points[t].y * localScale * overallScale + centerY);
-          }
-          
-          output.addElement(formula);
-        }        
         
         popMatrix();
       }
     }
        
     iterate = false;
-    println();
   }
   
   if(invert)  background(25);
