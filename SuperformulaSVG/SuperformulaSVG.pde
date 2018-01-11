@@ -67,7 +67,7 @@ int iterations;
 float decay;
 int rows = 1;
 int cols = 1;
-float highestRadius;  // used for automatically scaling drawings to fit cells
+float largestRadius;  // used for automatically scaling drawings to fit cells
 
 float aRangeMin = 0.01,
       aRangeMax = 4.0,
@@ -181,14 +181,14 @@ void draw() {
         float centerY = j * (height / rows) + (height / rows / 2);
   
         // Scaling variables
-        highestRadius = 0;
+        largestRadius = 0;
   
         pushMatrix();
         translate(centerX, centerY);
         
         float localScale = 1;
         float overallScale = 1;
-        highestRadius = 0;
+        largestRadius = 0;
                
         for(int s = iterations; s > 0; s--) {
           localScale *= decay;
@@ -216,7 +216,7 @@ void draw() {
             else
               smallestDimension = CELL_HEIGHT;
   
-            overallScale = (smallestDimension*.9) / (highestRadius*2);
+            overallScale = (smallestDimension*.9) / (largestRadius*2);
           }
           
           formula.addMoveTo(points[points.length-1].x * localScale * overallScale + centerX, points[points.length-1].y * localScale * overallScale + centerY);
@@ -263,6 +263,7 @@ RPoint superformulaPoint(float a, float b, float m, float n1, float n2, float n3
   float t1, t2;
   float x = 0;
   float y = 0;
+  float radius;
 
   t1 = cos(m * phi / 4) / a;
   t1 = abs(t1);
@@ -281,9 +282,12 @@ RPoint superformulaPoint(float a, float b, float m, float n1, float n2, float n3
     r = 1 / r;
     x = r * cos(phi);
     y = r * sin(phi);
+    
+    radius = sqrt(x*x + y*y);
+    
+    if(radius > largestRadius)
+      largestRadius = radius;
   }
-  
-  if(r > highestRadius)  highestRadius = r;
 
   return new RPoint(x, y);
 }
