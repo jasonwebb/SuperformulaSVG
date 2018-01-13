@@ -1,8 +1,8 @@
 # SuperformulaSVG
 
-Generative superformula line-art generator built in Processing, supporting vector output using Geomerative.
+Generative [superformula](https://en.wikipedia.org/wiki/Superformula) vector-based line-art sketch for Processing, supporting both SVG and raster image output.
 
-Based on code provided by Form+Code: http://formandcode.com/code-examples/visualize-superformula
+Uses some core code provided by [Form+Code](http://formandcode.com/code-examples/visualize-superformula).
 
 ## About the superformula
 
@@ -10,16 +10,15 @@ The superformula is a mathematical method for generating radial geometry with di
 
 ![Superformula equation](docs/superformula-equation.png)
 
-Where __&phi;__ (phi) is an angle (between 0-359) and the resulting value __r__ being the radius of the geometry at that angle.
+Where __&phi;__ (phi) is an angle (between 0-359) and the resulting value `r` being the radius of the geometry at that angle.
 
-I personally like to think of the various parameters as:
-* __a__ and __b__ do _something_, but not sure yet
-* __m__ is the number of peaks per revolution
-* __n1__ inversely correlates to the convexity of curvature between peak (smaller numbers make deeper valleys)
-* __n2__ relates to the presence and size of larger, smoother mounds between the peaks created by __m__ that are inversely proportional in size to the size of those peaks. Larger mounds results in smaller peaks and vice versa.
-* __n3__ relates to overall degree of "extremeness" between peaks and valleys.
+Here is how I like to think of the parameters and how they affect the resulting drawing:
+* `a` seems to affect lateral stretching
+* `b` seems to affect vertical stretching
+* `m` affects the degree of rotational symmetry. Large values means more peaks/spikes.
+* `n1`, `n2`, `n3` all affect the concavity/convexity of spikes and how far they extend from the center. In tandem the can be used to make the form more 'bloated' or 'pinched'.
 
-Following the example set by the original Form+Code example I also include the ability to run multiple iterations of the superformula with slightly changing (decaying) parameter values. You can control these parameters using the __iterations__ and __decay__ sliders.
+Following the example set by the original [Form+Code example](http://formandcode.com/code-examples/visualize-superformula) I also include the ability to run multiple iterations of the superformula with slightly changing (decaying) parameter values. You can control these parameters using the `iterations` and `decay` sliders.
 
 Learn more about the superformula through:
 * Daniel Shiffman's [Coding Challenge #23: 2D Supershapes](https://www.youtube.com/watch?v=ksRoh-10lak).
@@ -27,14 +26,14 @@ Learn more about the superformula through:
 * Paul Bourke's article ["Supershapes (Superformula)"](http://paulbourke.net/geometry/supershape/)
 
 ## Keyboard commands:
-* __Space__ = trigger a new iteration
-* __s__ = save an SVG containing all geometry on screen
-* __i__ = save an image (PNG) of the current screen
-* __r__ = randomize parameters
-* __n__ = invert colors
-* __h__ = hide/show UI
-* __p__ = save parameters to JSON file
-* __l__ = load parameters from JSON file
+* `Space` = trigger a new iteration
+* `s` = save an SVG containing all geometry on screen
+* `i` = save an image (PNG) of the current screen
+* `r` = randomize parameters
+* `n` = invert colors
+* `h` = hide/show UI
+* `p` = save parameters to JSON file
+* `l` = load parameters from JSON file
 
 ## Screenshots
 
