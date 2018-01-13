@@ -131,6 +131,8 @@ void setup() {
   
   RG.init(this);
   
+  hint(ENABLE_STROKE_PURE);
+  
   setupUI();
 }
 
